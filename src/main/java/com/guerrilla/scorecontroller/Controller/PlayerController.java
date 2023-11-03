@@ -25,15 +25,15 @@ public class PlayerController {
     }
 
     @PostMapping("/")
-    public Player createPlayer(@RequestParam(name = "alias") String alias) {
+    public Player createPlayer(@RequestParam(name = "userName") String userName) {
         log.info("Player Created");
         return new Player();
     }
 
     @PutMapping("/{id}")
-    public Player changePlayerAlias(@RequestParam(name = "id") Long id, @RequestParam("alias") String alias) {
+    public Player changePlayerAlias(@RequestParam(name = "id") Long id, @RequestParam("userName") String userName) {
 
-        log.info("Player Changed Alias");
+        log.info("Player Changed User Name");
         return new Player();
     }
 
