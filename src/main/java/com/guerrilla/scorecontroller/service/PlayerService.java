@@ -2,7 +2,7 @@ package com.guerrilla.scorecontroller.service;
 
 import com.guerrilla.scorecontroller.exception.PlayerNotFoundException;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.PlayerRepository;
+import com.guerrilla.scorecontroller.repository.PlayerDynamoDbRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,14 +12,14 @@ import java.util.Optional;
 @Service
 public class PlayerService {
 
-    private final PlayerRepository playerRepository;
+    private final PlayerDynamoDbRepository playerDynamoDbRepository;
     @Autowired
-    public PlayerService(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+    public PlayerService(PlayerDynamoDbRepository playerDynamoDbRepository) {
+        this.playerDynamoDbRepository = playerDynamoDbRepository;
     }
 
     public Player getPlayer(Long id) {
-        Optional<Player> player = playerRepository.getPlayer(id);
+        Optional<Player> player = playerDynamoDbRepository.getPlayer(id);
 
         if (player.isPresent()) {
             return player.get();
@@ -29,14 +29,14 @@ public class PlayerService {
     }
 
     public List<Player> getPlayers() {
-        return playerRepository.getPlayers();
+        return playerDynamoDbRepository.getPlayers();
     }
 
     public Player createPlayer(String userName) {
-        return playerRepository.createPlayer(userName);
+        return playerDynamoDbRepository.createPlayer(userName);
     }
     public Player renamePlayer(Long id, String userName) {
-        Optional<Player> player = playerRepository.updatePlayer(id, userName);
+        Optional<Player> player = playerDynamoDbRepository.updatePlayer(id, userName);
 
         if (player.isPresent()) {
             return player.get();
@@ -46,7 +46,7 @@ public class PlayerService {
     }
 
     public void deletePlayer(Long id) {
-        playerRepository.deletePlayer(id);
+        playerDynamoDbRepository.deletePlayer(id);
     }
 
 }
