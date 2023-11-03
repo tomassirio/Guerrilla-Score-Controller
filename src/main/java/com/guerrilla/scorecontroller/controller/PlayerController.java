@@ -1,45 +1,67 @@
 package com.guerrilla.scorecontroller.controller;
 
+import com.guerrilla.scorecontroller.exception.PlayerNotFoundException;
 import com.guerrilla.scorecontroller.model.Player;
+import com.guerrilla.scorecontroller.service.PlayerService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/player")
 @Slf4j
 public class PlayerController {
 
+    private final PlayerService playerService;
+
+    @Autowired
+    public PlayerController(PlayerService playerService) {
+        this.playerService = playerService;
+    }
+
 
     @GetMapping("/{id}")
-    public Optional<Player> getPlayerById(@RequestParam(name = "id") Long id) {
+    public ResponseEntity<Player> getPlayerById(@RequestParam(name = "id") Long id) {
+        Player player = playerService.getPlayer(id);
 
-        return Optional.empty();
+        return ResponseEntity.ok(player);
     }
 
     @GetMapping("/")
-    public List<Player> getPlayers(){
-        return List.of();
+    public ResponseEntity<List<Player>> getPlayers(){
+        List<Player> players = playerService.getPlayers();
+
+        return ResponseEntity.ok(players);
     }
 
     @PostMapping("/")
-    public Player createPlayer(@RequestParam(name = "userName") String userName) {
-        log.info("Player Created");
-        return new Player();
+    public ResponseEntity<Player> createPlayer(@RequestParam(name = "userName") String userName) {
+        Player player = playerService.createPlayer(userName);
+
+        log.info("Player Created: "+ player.getPlayerId() + "; " + player.getUsername());
+        return ResponseEntity.ok(player);
     }
 
     @PutMapping("/{id}")
-    public Player changePlayerAlias(@RequestParam(name = "id") Long id, @RequestParam("userName") String userName) {
+    public ResponseEntity<Player> changePlayerAlias(@RequestParam(name = "id") Long id, @RequestParam("userName") String userName) {
+        Player player = playerService.renamePlayer(id, userName);
 
-        log.info("Player Changed User Name");
-        return new Player();
+        log.info("Player Changed User Name: "+ player.getPlayerId() + "; " + player.getUsername());
+        return ResponseEntity.ok(player);
     }
 
     @DeleteMapping("/{id}")
     public void deletePlayer(@RequestParam(name = "id") Long id) {
+        Player player = playerService.getPlayer(id);
+        log.info("Player Deleted: "+ player.getPlayerId() + "; " + player.getUsername());
+        playerService.deletePlayer(player.getPlayerId());
+    }
 
-        log.info("Player Deleted");
+    @ExceptionHandler(PlayerNotFoundException.class)
+    public ResponseEntity<String> handlePlayerNotFoundException() {
+        return ResponseEntity.notFound().build();
     }
 }
