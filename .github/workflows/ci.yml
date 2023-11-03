@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+
+      - name: Build and Verify
+        run: |
+          ./mvnw clean verify
+        working-directory: ./
+
+      - name: Check Build Status
+        id: build-status
+        run: echo "Build and Verify completed successfully!"
+
+      - name: Set Build Status
+        if: success()
+        run: gh pr merge $GITHUB_REF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
