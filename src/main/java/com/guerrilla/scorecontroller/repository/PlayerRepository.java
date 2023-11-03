@@ -53,10 +53,15 @@ public class PlayerRepository {
 
         Optional<Player> optionalPlayer = Optional.empty();
         if (item != null) {
-            Long retrievedPlayerId = Long.valueOf(item.get(PLAYER_ID).s());
-            String retrievedUsername = item.get(USER_NAME).s();
+            AttributeValue playerIdAttribute = item.get(PLAYER_ID);
+            AttributeValue usernameAttribute = item.get(USER_NAME);
 
-            optionalPlayer = Optional.of(new Player(retrievedPlayerId, retrievedUsername));
+            if (playerIdAttribute != null && usernameAttribute != null) {
+                Long retrievedPlayerId = Long.valueOf(playerIdAttribute.s());
+                String retrievedUsername = usernameAttribute.s();
+
+                optionalPlayer = Optional.of(new Player(retrievedPlayerId, retrievedUsername));
+            }
         }
         return optionalPlayer;
     }
@@ -84,29 +89,51 @@ public class PlayerRepository {
         Map<String, AttributeValue> key = Map.of(
                 PLAYER_ID, AttributeValue.builder().s(id.toString()).build()
         );
-        UpdateItemRequest updateItemRequest = UpdateItemRequest.builder()
-                .tableName(PLAYER_TABLE)
-                .key(key)
-                .attributeUpdates(
-                        Map.of(
-                                USER_NAME, AttributeValueUpdate.builder()
-                                        .value(AttributeValue.builder().s(username).build())
-                                        .action(AttributeAction.PUT)
-                                        .build()
-                        )
-                )
-                .build();
-
-        Map<String, AttributeValue> attributes = dynamoDbClient.updateItem(updateItemRequest).attributes();
 
         Optional<Player> optionalPlayer = Optional.empty();
-        if (!attributes.isEmpty()) {
-            Long extractedPlayerId = Long.valueOf(attributes.get(PLAYER_ID).s());
-            String extractedUserName = attributes.get(USER_NAME).s();
 
-            optionalPlayer = Optional.of(new Player(extractedPlayerId, extractedUserName));
+        // Check if the player with the given ID exists before attempting to update
+        if (playerExists(id)) {
+            UpdateItemRequest updateItemRequest = UpdateItemRequest.builder()
+                    .tableName(PLAYER_TABLE)
+                    .key(key)
+                    .attributeUpdates(
+                            Map.of(
+                                    USER_NAME, AttributeValueUpdate.builder()
+                                            .value(AttributeValue.builder().s(username).build())
+                                            .action(AttributeAction.PUT)
+                                            .build()
+                            )
+                    )
+                    .returnValues(ReturnValue.ALL_NEW) // Get updated attributes
+                    .build();
+
+            Map<String, AttributeValue> attributes = dynamoDbClient.updateItem(updateItemRequest).attributes();
+
+            if (!attributes.isEmpty()) {
+                Long extractedPlayerId = Long.valueOf(attributes.get(PLAYER_ID).s());
+                String extractedUserName = attributes.get(USER_NAME).s();
+
+                optionalPlayer = Optional.of(new Player(extractedPlayerId, extractedUserName));
+            }
         }
+
         return optionalPlayer;
+    }
+
+    private boolean playerExists(Long id) {
+        Map<String, AttributeValue> key = Map.of(
+                PLAYER_ID, AttributeValue.builder().s(id.toString()).build()
+        );
+
+        GetItemRequest getItemRequest = GetItemRequest.builder()
+                .tableName(PLAYER_TABLE)
+                .key(key)
+                .build();
+
+        Map<String, AttributeValue> item = dynamoDbClient.getItem(getItemRequest).item();
+
+        return item != null && !item.isEmpty();
     }
 
     public void deletePlayer(Long id) {
@@ -116,6 +143,7 @@ public class PlayerRepository {
 
         DeleteItemRequest deleteItemRequest = DeleteItemRequest.builder()
                 .key(key)
+                .tableName(PLAYER_TABLE)
                 .build();
 
         dynamoDbClient.deleteItem(deleteItemRequest);

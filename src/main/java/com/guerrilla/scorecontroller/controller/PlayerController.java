@@ -24,7 +24,7 @@ public class PlayerController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Player> getPlayerById(@RequestParam(name = "id") Long id) {
+    public ResponseEntity<Player> getPlayerById(@PathVariable(name = "id") Long id) {
         Player player = playerService.getPlayer(id);
 
         return ResponseEntity.ok(player);
@@ -46,7 +46,7 @@ public class PlayerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Player> changePlayerAlias(@RequestParam(name = "id") Long id, @RequestParam("userName") String userName) {
+    public ResponseEntity<Player> changePlayerAlias(@PathVariable(name = "id") Long id, @RequestParam("userName") String userName) {
         Player player = playerService.renamePlayer(id, userName);
 
         log.info("Player Changed User Name: "+ player.getPlayerId() + "; " + player.getUsername());
@@ -54,14 +54,15 @@ public class PlayerController {
     }
 
     @DeleteMapping("/{id}")
-    public void deletePlayer(@RequestParam(name = "id") Long id) {
+    public void deletePlayer(@PathVariable(name = "id") Long id) {
         Player player = playerService.getPlayer(id);
         log.info("Player Deleted: "+ player.getPlayerId() + "; " + player.getUsername());
         playerService.deletePlayer(player.getPlayerId());
     }
 
     @ExceptionHandler(PlayerNotFoundException.class)
-    public ResponseEntity<String> handlePlayerNotFoundException() {
+    public ResponseEntity<String> handlePlayerNotFoundException(PlayerNotFoundException exception) {
+        log.error(exception.getLocalizedMessage());
         return ResponseEntity.notFound().build();
     }
 }
