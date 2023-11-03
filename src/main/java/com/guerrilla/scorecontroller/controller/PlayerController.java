@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/player")
-@Slf4j
 public class PlayerController {
 
     private final PlayerService playerService;
@@ -38,14 +38,14 @@ public class PlayerController {
         return ResponseEntity.ok(player);
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<Player>> getPlayers(){
         List<Player> players = playerService.getPlayers();
 
         return ResponseEntity.ok(players);
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<Player> createPlayer(@RequestParam(name = "userName") String userName) {
         Player player = playerService.createPlayer(userName);
 
@@ -54,7 +54,7 @@ public class PlayerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Player> changePlayerAlias(@PathVariable(name = "id") Long id, @RequestParam("userName") String userName) {
+    public ResponseEntity<Player> changePlayerUsername(@PathVariable(name = "id") Long id, @RequestParam("userName") String userName) {
         Player player = playerService.renamePlayer(id, userName);
 
         log.info("Player Changed User Name: "+ player.getPlayerId() + "; " + player.getUsername());

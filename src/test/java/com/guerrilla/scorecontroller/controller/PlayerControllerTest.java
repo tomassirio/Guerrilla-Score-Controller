@@ -96,7 +96,7 @@ public class PlayerControllerTest {
 
         when(playerService.renamePlayer(playerId, newUserName)).thenReturn(updatedPlayer);
 
-        ResponseEntity<Player> response = playerController.changePlayerAlias(playerId, newUserName);
+        ResponseEntity<Player> response = playerController.changePlayerUsername(playerId, newUserName);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(updatedPlayer, response.getBody());
@@ -142,7 +142,7 @@ public class PlayerControllerTest {
 
         when(playerService.renamePlayer(playerId, newUserName)).thenThrow(new PlayerNotFoundException(playerId));
 
-        assertThrows(PlayerNotFoundException.class, () -> playerController.changePlayerAlias(playerId, newUserName));
+        assertThrows(PlayerNotFoundException.class, () -> playerController.changePlayerUsername(playerId, newUserName));
     }
 
     @Test
