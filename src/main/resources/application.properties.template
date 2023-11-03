@@ -1,0 +1,3 @@
+aws.accessKey=YOUR_ACCESS_KEY
+aws.secretKey=YOUR_SECRET_KEY
+aws.region=us-east-1
