@@ -1,4 +1,4 @@
-package com.guerrilla.scorecontroller.Controller;
+package com.guerrilla.scorecontroller.controller;
 
 import com.guerrilla.scorecontroller.model.Player;
 import lombok.extern.slf4j.Slf4j;

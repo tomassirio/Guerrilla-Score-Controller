@@ -1,5 +1,10 @@
 package com.guerrilla.scorecontroller.model;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
 public class Player {
     private Long playerId;
     private String username;
