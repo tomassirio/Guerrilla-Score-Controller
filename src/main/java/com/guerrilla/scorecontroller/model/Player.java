@@ -9,6 +9,8 @@ import lombok.Setter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,9 +20,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @DynamoDbBean
 public class Player {
 
-    private Long playerId;
+    private UUID playerId;
     private String username;
-
     @DynamoDbPartitionKey
-    public Long getPlayerId(){return this.playerId;}
+    public UUID getPlayerId(){return this.playerId;}
 }

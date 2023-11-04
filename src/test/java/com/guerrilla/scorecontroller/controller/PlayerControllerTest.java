@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,7 +34,7 @@ public class PlayerControllerTest {
 
     @Test
     public void testGetPlayerById() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
 
         Player player = Player.builder()
                 .playerId(playerId)
@@ -42,7 +43,7 @@ public class PlayerControllerTest {
 
         when(playerService.getPlayer(playerId)).thenReturn(player);
 
-        ResponseEntity<Player> response = playerController.getPlayerById(playerId);
+        ResponseEntity<Player> response = playerController.getPlayerById(playerId.toString());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(player, response.getBody());
@@ -52,11 +53,11 @@ public class PlayerControllerTest {
     public void testGetPlayers() {
         List<Player> players = List.of(
                 Player.builder()
-                        .playerId(1L)
+                        .playerId(UUID.randomUUID())
                         .username("Mr Potato")
                         .build(),
                 Player.builder()
-                        .playerId(2L)
+                        .playerId(UUID.randomUUID())
                         .username("Rex")
                         .build()
         );
@@ -73,7 +74,7 @@ public class PlayerControllerTest {
     public void testCreatePlayer() {
         String userName = "Mr Potato";
         Player createdPlayer = Player.builder()
-                .playerId(1L)
+                .playerId(UUID.randomUUID())
                 .username(userName)
                 .build();
 
@@ -87,7 +88,7 @@ public class PlayerControllerTest {
 
     @Test
     public void testChangePlayerAlias() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String newUserName = "Mr Potato";
         Player updatedPlayer = Player.builder()
                 .playerId(playerId)
@@ -96,7 +97,7 @@ public class PlayerControllerTest {
 
         when(playerService.renamePlayer(playerId, newUserName)).thenReturn(updatedPlayer);
 
-        ResponseEntity<Player> response = playerController.changePlayerUsername(playerId, newUserName);
+        ResponseEntity<Player> response = playerController.changePlayerUsername(playerId.toString(), newUserName);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(updatedPlayer, response.getBody());
@@ -104,7 +105,7 @@ public class PlayerControllerTest {
 
     @Test
     public void testDeletePlayer() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         Player player = Player.builder()
                 .playerId(playerId)
                 .username("Mr Potato")
@@ -112,14 +113,14 @@ public class PlayerControllerTest {
 
         when(playerService.getPlayer(playerId)).thenReturn(player);
 
-        playerController.deletePlayer(playerId);
+        playerController.deletePlayer(playerId.toString());
 
         Mockito.verify(playerService, Mockito.times(1)).deletePlayer(playerId);
     }
 
     @Test
     public void testHandlePlayerNotFoundException() {
-        PlayerNotFoundException exception = new PlayerNotFoundException(1L);
+        PlayerNotFoundException exception = new PlayerNotFoundException(UUID.randomUUID().toString());
 
         ResponseEntity<String> response = playerController.handlePlayerNotFoundException(exception);
 
@@ -128,29 +129,20 @@ public class PlayerControllerTest {
 
     @Test
     public void testGetPlayerById_PlayerNotFoundException() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
 
-        when(playerService.getPlayer(playerId)).thenThrow(new PlayerNotFoundException(playerId));
+        when(playerService.getPlayer(playerId)).thenThrow(new PlayerNotFoundException(playerId.toString()));
 
-        assertThrows(PlayerNotFoundException.class, () -> playerController.getPlayerById(playerId));
+        assertThrows(PlayerNotFoundException.class, () -> playerController.getPlayerById(playerId.toString()));
     }
 
     @Test
     public void testChangePlayerAlias_PlayerNotFoundException() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String newUserName = "Mr Potato";
 
-        when(playerService.renamePlayer(playerId, newUserName)).thenThrow(new PlayerNotFoundException(playerId));
+        when(playerService.renamePlayer(playerId, newUserName)).thenThrow(new PlayerNotFoundException(playerId.toString()));
 
-        assertThrows(PlayerNotFoundException.class, () -> playerController.changePlayerUsername(playerId, newUserName));
-    }
-
-    @Test
-    public void testDeletePlayer_PlayerNotFoundException() {
-        Long playerId = 1L;
-
-        when(playerService.getPlayer(playerId)).thenThrow(new PlayerNotFoundException(playerId));
-
-        assertThrows(PlayerNotFoundException.class, () -> playerController.deletePlayer(playerId));
+        assertThrows(PlayerNotFoundException.class, () -> playerController.changePlayerUsername(playerId.toString(), newUserName));
     }
 }

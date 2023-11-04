@@ -11,15 +11,13 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 public class ScoreControllerTest {
     @Mock
@@ -35,10 +33,15 @@ public class ScoreControllerTest {
 
     @Test
     public void testCreateScore() {
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
-        when(scoreService.createScore(anyLong(), anyInt())).thenReturn(score);
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69)
+                .build();
 
-        ResponseEntity<Score> responseEntity = scoreController.createScore(score.getPlayerId(), 69);
+        when(scoreService.createScore(score.getPlayerId(), score.getValue())).thenReturn(score);
+
+        ResponseEntity<Score> responseEntity = scoreController.createScore(score.getPlayerId().toString(), score.getValue());
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(score, responseEntity.getBody());
@@ -46,7 +49,11 @@ public class ScoreControllerTest {
 
     @Test
     public void testGetScoreById() {
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69).build();
+
         when(scoreService.getScore(score.getScoreId())).thenReturn(score);
 
         ResponseEntity<Score> responseEntity = scoreController.getScoreById(score.getScoreId().toString());
@@ -57,13 +64,24 @@ public class ScoreControllerTest {
 
     @Test
     public void testGetScoresByPlayer() {
-        List<Score> scores = new ArrayList<>();
-        scores.add(Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build());
-        scores.add(Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(420).build());
+        UUID playerId = UUID.randomUUID();
 
-        when(scoreService.getScoresByPlayer(anyLong())).thenReturn(scores);
+        List<Score> scores = List.of(
+                Score.builder()
+                        .scoreId(UUID.randomUUID())
+                        .playerId(playerId)
+                        .value(69)
+                        .build(),
+                Score.builder()
+                        .scoreId(UUID.randomUUID())
+                        .playerId(playerId)
+                        .value(420)
+                        .build()
+        );
 
-        ResponseEntity<List<Score>> responseEntity = scoreController.getScoresByPlayer(1L);
+        when(scoreService.getScoresByPlayer(playerId)).thenReturn(scores);
+
+        ResponseEntity<List<Score>> responseEntity = scoreController.getScoresByPlayer(playerId.toString());
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(scores, responseEntity.getBody());
@@ -72,7 +90,11 @@ public class ScoreControllerTest {
     @Test
     public void testUpdateScore() {
         Integer newValue = 420;
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69)
+                .build();
 
         when(scoreService.getScore(score.getScoreId())).thenReturn(score);
 
@@ -88,7 +110,11 @@ public class ScoreControllerTest {
 
     @Test
     public void testDeleteScore() {
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69).build();
+
         when(scoreService.getScore(score.getScoreId())).thenReturn(score);
 
         scoreController.deleteScore(score.getScoreId().toString());

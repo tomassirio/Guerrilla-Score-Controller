@@ -31,10 +31,15 @@ public class ScoreServiceTest {
 
     @Test
     public void testCreateScore() {
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
-        when(scoreRepository.createScore(anyLong(), anyInt())).thenReturn(score);
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69)
+                .build();
 
-        Score createdScore = scoreService.createScore(1L, 69);
+        when(scoreRepository.createScore(score.getPlayerId(), score.getValue())).thenReturn(score);
+
+        Score createdScore = scoreService.createScore(score.getPlayerId(), score.getValue());
 
         assertNotNull(createdScore);
         assertEquals(score.getScoreId(), createdScore.getScoreId());
@@ -43,7 +48,12 @@ public class ScoreServiceTest {
 
     @Test
     public void testGetScore() {
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69)
+                .build();
+
         when(scoreRepository.getScore(score.getScoreId())).thenReturn(Optional.of(score));
 
         Score retrievedScore = scoreService.getScore(score.getScoreId());
@@ -63,12 +73,23 @@ public class ScoreServiceTest {
 
     @Test
     public void testGetScoresByPlayer() {
-        List<Score> scores = new ArrayList<>();
-        scores.add(Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build());
-        scores.add(Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(420).build());
-        when(scoreRepository.getScoresByPlayer(anyLong())).thenReturn(scores);
+        UUID playerId = UUID.randomUUID();
+        List<Score> scores = List.of(
+                Score.builder()
+                        .scoreId(UUID.randomUUID())
+                        .playerId(playerId)
+                        .value(69)
+                        .build(),
+                Score.builder()
+                        .scoreId(UUID.randomUUID())
+                        .playerId(playerId)
+                        .value(420)
+                        .build()
+        );
 
-        List<Score> retrievedScores = scoreService.getScoresByPlayer(1L);
+        when(scoreRepository.getScoresByPlayer(playerId)).thenReturn(scores);
+
+        List<Score> retrievedScores = scoreService.getScoresByPlayer(playerId);
 
         assertNotNull(retrievedScores);
         assertEquals(2, retrievedScores.size());
@@ -77,7 +98,11 @@ public class ScoreServiceTest {
     @Test
     public void testUpdateScore() {
         Integer newValue = 420;
-        Score score = Score.builder().scoreId(UUID.randomUUID()).playerId(1L).value(69).build();
+        Score score = Score.builder()
+                .scoreId(UUID.randomUUID())
+                .playerId(UUID.randomUUID())
+                .value(69)
+                .build();
 
         when(scoreRepository.getScore(score.getScoreId())).thenReturn(Optional.of(score));
 

@@ -1,5 +1,6 @@
 package com.guerrilla.scorecontroller.config;
 
+import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -37,11 +38,11 @@ public class DynamoDbConfig {
     }
 
     @Bean
-    public DynamoDbTable<Score> playerTable(DynamoDbClient dynamoDbClient, @Value("${player.table}") String playerTableName) {
+    public DynamoDbTable<Player> playerTable(DynamoDbClient dynamoDbClient, @Value("${player.table}") String playerTableName) {
         DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
-        TableSchema<Score> scoreDocumentSchema = TableSchema.fromBean(Score.class);
-        return dynamoDbEnhancedClient.table(playerTableName, scoreDocumentSchema);
+        TableSchema<Player> playerDocumentSchema = TableSchema.fromBean(Player.class);
+        return dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
     }
 }

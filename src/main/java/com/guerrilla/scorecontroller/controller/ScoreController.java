@@ -23,37 +23,37 @@ public class ScoreController {
     }
 
     @PostMapping
-    public ResponseEntity<Score> createScore(@RequestParam Long playerId, @RequestParam Integer value) {
-        Score score = scoreService.createScore(playerId, value);
+    public ResponseEntity<Score> createScore(@RequestParam String playerId, @RequestParam Integer value) {
+        Score score = scoreService.createScore(UUID.fromString(playerId), value);
 
         log.info("Score Created: " + score.getScoreId() + "; PlayerId: " + score.getPlayerId() + "; Value: " + score.getValue());
         return ResponseEntity.ok(score);
     }
 
     @GetMapping
-    public ResponseEntity<Score> getScoreById(@RequestParam(name = "scoreId") String scoreId) {
+    public ResponseEntity<Score> getScoreById(@RequestParam String scoreId) {
         Score score = scoreService.getScore(UUID.fromString(scoreId));
 
         return ResponseEntity.ok(score);
     }
 
-    @GetMapping("/player/{playerId}")
-    public ResponseEntity<List<Score>> getScoresByPlayer(@PathVariable Long playerId) {
-        List<Score> scores = scoreService.getScoresByPlayer(playerId);
+    @GetMapping("/player")
+    public ResponseEntity<List<Score>> getScoresByPlayer(@RequestParam String playerId) {
+        List<Score> scores = scoreService.getScoresByPlayer(UUID.fromString(playerId));
 
         return ResponseEntity.ok(scores);
     }
 
-    @PutMapping("/{scoreId}")
-    public ResponseEntity<Score> updateScore(@PathVariable String scoreId, @RequestParam Integer value) {
+    @PutMapping()
+    public ResponseEntity<Score> updateScore(@RequestParam String scoreId, @RequestParam Integer value) {
         Score score = scoreService.updateScore(UUID.fromString(scoreId), value);
 
         log.info("Score Updated: " + score.getScoreId() + "; PlayerId: " + score.getPlayerId() + "; New Value: " + score.getValue());
         return ResponseEntity.ok(score);
     }
 
-    @DeleteMapping("/{scoreId}")
-    public void deleteScore(@PathVariable String scoreId) {
+    @DeleteMapping
+    public void deleteScore(@RequestParam String scoreId) {
         Score score = scoreService.getScore(UUID.fromString(scoreId));
         log.info("Score Deleted: " + score.getScoreId());
         scoreService.deleteScore(score.getScoreId());

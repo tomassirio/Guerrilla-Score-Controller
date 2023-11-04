@@ -1,31 +1,28 @@
 package com.guerrilla.scorecontroller.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@EqualsAndHashCode
 @DynamoDbBean
 public class Score {
+
     private UUID scoreId;
-    private Long playerId;
+    private UUID playerId;
     private Integer value;
     @DynamoDbPartitionKey
-    public UUID getScoreId() {
-        return scoreId;
-    }
-
+    public UUID getScoreId() {return this.scoreId;}
     @DynamoDbSortKey
-    public Long getPlayerId() {
-        return playerId;
+    public UUID getPlayerId() {
+        return this.playerId;
     }
 }

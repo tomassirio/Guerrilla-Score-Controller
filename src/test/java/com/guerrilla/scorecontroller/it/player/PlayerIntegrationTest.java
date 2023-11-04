@@ -2,8 +2,8 @@ package com.guerrilla.scorecontroller.it.player;
 
 import com.guerrilla.scorecontroller.ScoreControllerApplication;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.dynamoDbImpl.PlayerDynamoDbRepository;
 import com.guerrilla.scorecontroller.repository.PlayerRepository;
+import com.guerrilla.scorecontroller.repository.dynamoDbImpl.PlayerDynamoDbRepository;
 import com.guerrilla.scorecontroller.service.PlayerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -13,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -28,8 +29,14 @@ public class PlayerIntegrationTest {
 
     @Test
     public void testGetAllPlayers() {
-        Player player1 = new Player(1L, "Mr Potato");
-        Player player2 = new Player(2L, "Rex");
+        Player player1 = Player.builder()
+                .playerId(UUID.randomUUID())
+                .username("Mr Potato")
+                .build();
+        Player player2 = Player.builder()
+                .playerId(UUID.randomUUID())
+                .username("Rex")
+                .build();
         List<Player> mockPlayers = List.of(player1, player2);
 
         when(playerRepository.getPlayers()).thenReturn(mockPlayers);
@@ -43,24 +50,33 @@ public class PlayerIntegrationTest {
 
     @Test
     public void testGetPlayerById() {
-        Player player = new Player(1L, "Mr Potato");
+        Player player = Player.builder()
+                .playerId(UUID.randomUUID())
+                .username("Mr Potato")
+                .build();
 
-        when(playerRepository.getPlayer(1L)).thenReturn(Optional.of(player));
+        when(playerRepository.getPlayer(player.getPlayerId())).thenReturn(Optional.of(player));
 
-        Player retrievedPlayer = playerService.getPlayer(1L);
+        Player retrievedPlayer = playerService.getPlayer(player.getPlayerId());
 
         assertEquals(player, retrievedPlayer);
     }
 
     @Test
     public void testUpdatePlayerUsername() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String newUsername = "Updated Mr Potato";
-        Player originalPlayer = new Player(playerId, "Mr Potato");
+        Player originalPlayer = Player.builder()
+                .playerId(playerId)
+                .username("Mr Potato")
+                .build();
 
         when(playerRepository.getPlayer(playerId)).thenReturn(Optional.of(originalPlayer));
         when(playerRepository.updatePlayer(playerId, newUsername))
-                .thenReturn(Optional.of(new Player(playerId, newUsername)));
+                .thenReturn(Optional.of(Player.builder()
+                        .playerId(playerId)
+                        .username(newUsername)
+                        .build()));
 
         Player updatedPlayer = playerService.renamePlayer(playerId, newUsername);
 
@@ -69,20 +85,34 @@ public class PlayerIntegrationTest {
 
     @Test
     public void testCreatePlayer() {
-        when(playerRepository.createPlayer("Mr Potato")).thenReturn(new Player(1L, "Mr Potato"));
+        UUID playerId = UUID.randomUUID();
+
+        when(playerRepository.createPlayer("Mr Potato")).thenReturn(Player.builder()
+                .username("Mr Potato")
+                .playerId(playerId)
+                .build());
 
         Player createdPlayer = playerService.createPlayer("Mr Potato");
 
         assertEquals("Mr Potato", createdPlayer.getUsername());
+        assertEquals(playerId, createdPlayer.getPlayerId());
     }
 
     @Test
     public void testDeletePlayer() {
-        when(playerRepository.getPlayer(1L)).thenReturn(Optional.of(new Player(1L, "Mr Potato")));
+        UUID playerId = UUID.randomUUID();
 
-        playerService.deletePlayer(1L);
+        when(playerRepository.getPlayer(playerId))
+                .thenReturn(
+                        Optional.of(
+                                Player.builder()
+                                        .username("Mr Potato")
+                                        .playerId(playerId)
+                                        .build()));
 
-        Mockito.verify(playerRepository, Mockito.times(1)).deletePlayer(1L);
+        playerService.deletePlayer(playerId);
+
+        Mockito.verify(playerRepository, Mockito.times(1)).deletePlayer(playerId);
     }
 
 }

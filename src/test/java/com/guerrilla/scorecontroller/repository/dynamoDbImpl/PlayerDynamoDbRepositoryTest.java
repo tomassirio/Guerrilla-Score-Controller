@@ -1,13 +1,19 @@
 package com.guerrilla.scorecontroller.repository.dynamoDbImpl;
 
 import com.guerrilla.scorecontroller.model.Player;
+import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.PlayerRepository;
+import com.guerrilla.scorecontroller.repository.ScoreRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
@@ -18,90 +24,104 @@ import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class PlayerDynamoDbRepositoryTest {
 
     @Mock
-    private DynamoDbClient dynamoDbClient;
+    private DynamoDbTable<Player> playerTable;
 
     private PlayerRepository playerRepository;
 
     @BeforeEach
     public void setUp() {
-        dynamoDbClient = Mockito.mock(DynamoDbClient.class);
-        playerRepository = new PlayerDynamoDbRepository(dynamoDbClient);
+        playerTable = Mockito.mock(DynamoDbTable.class);
+        playerRepository = new PlayerDynamoDbRepository(playerTable);
     }
+
 
     @Test
     public void testCreatePlayer() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String username = "Mr Potato";
-        PlayerDynamoDbRepository playerRepository = new PlayerDynamoDbRepository(dynamoDbClient) {
-            @Override
-            protected long generatePlayerId() {
-                return playerId;
-            }
-        };
 
         Player expectedPlayer = Player.builder()
                 .playerId(playerId)
                 .username(username)
                 .build();
+        PlayerDynamoDbRepository playerRepository = new PlayerDynamoDbRepository(playerTable) {
+            @Override
+            protected UUID generatePlayerId() {
+                return playerId;
+            }
+        };
 
-        ArgumentCaptor<PutItemRequest> putItemRequestCaptor = ArgumentCaptor.forClass(PutItemRequest.class);
-
-        when(dynamoDbClient.putItem(putItemRequestCaptor.capture())).thenReturn(PutItemResponse.builder().build());
+        ArgumentCaptor<PutItemEnhancedRequest> putItemRequestCaptor = ArgumentCaptor.forClass(PutItemEnhancedRequest.class);
 
         Player newPlayer = playerRepository.createPlayer(username);
+        verify(playerTable, times(1)).putItem(putItemRequestCaptor.capture());
 
         assertEquals(expectedPlayer, newPlayer);
 
-        PutItemRequest putItemRequest = putItemRequestCaptor.getValue();
-        assertEquals(playerId.toString(), putItemRequest.item().get("playerId").s());
-        assertEquals(username, putItemRequest.item().get("username").s());
+        PutItemEnhancedRequest putItemRequest = putItemRequestCaptor.getValue();
+        assertEquals(putItemRequest.item(), newPlayer);
     }
 
     @Test
     public void testGetPlayer() {
-        Long playerId = 1L;
-        Map<String, AttributeValue> item = Map.of(
-                "playerId", AttributeValue.builder().s("1").build(),
-                "username", AttributeValue.builder().s("Mr Potato").build()
-        );
+        UUID playerId = UUID.randomUUID();
+        String username = "Mr Potato";
 
-        GetItemRequest getItemRequest = GetItemRequest.builder()
-                .tableName("PlayerTable")
-                .key(Collections.singletonMap("playerId", AttributeValue.builder().s("1").build()))
+        Player player = Player.builder()
+                .playerId(playerId)
+                .username(username)
                 .build();
 
-        when(dynamoDbClient.getItem(getItemRequest)).thenReturn(GetItemResponse.builder().item(item).build());
+        GetItemEnhancedRequest getItemRequest = GetItemEnhancedRequest.builder()
+                .key(
+                        Key.builder()
+                                .partitionValue(player.getPlayerId().toString())
+                                .build()
+                )
+                .build();
+
+        when(playerTable.getItem(getItemRequest)).thenReturn(player);
 
         Optional<Player> retrievedPlayer = playerRepository.getPlayer(playerId);
 
         assertTrue(retrievedPlayer.isPresent());
-        assertEquals(1L, retrievedPlayer.get().getPlayerId());
-        assertEquals("Mr Potato", retrievedPlayer.get().getUsername());
+        assertEquals(playerId, retrievedPlayer.get().getPlayerId());
+        assertEquals(username, retrievedPlayer.get().getUsername());
     }
 
     @Test
     public void testGetPlayer_PlayerNotFound() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
+        String username = "Mr Potato";
 
-        GetItemRequest getItemRequest = GetItemRequest.builder()
-                .tableName("PlayerTable")
-                .key(Collections.singletonMap("playerId", AttributeValue.builder().s("1").build()))
+        Player player = Player.builder()
+                .playerId(playerId)
+                .username(username)
                 .build();
 
-        when(dynamoDbClient.getItem(getItemRequest)).thenReturn(GetItemResponse.builder().build());
+        GetItemEnhancedRequest getItemRequest = GetItemEnhancedRequest.builder()
+                .key(
+                        Key.builder()
+                                .partitionValue(player.getPlayerId().toString())
+                                .build()
+                )
+                .build();
+
+        when(playerTable.getItem(getItemRequest)).thenThrow(UnsupportedOperationException.class);
 
         Optional<Player> retrievedPlayer = playerRepository.getPlayer(playerId);
 
-        assertFalse(retrievedPlayer.isPresent());
+        assertTrue(retrievedPlayer.isEmpty());
     }
 }

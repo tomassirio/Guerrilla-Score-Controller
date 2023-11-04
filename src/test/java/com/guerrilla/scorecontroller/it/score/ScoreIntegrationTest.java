@@ -46,15 +46,14 @@ public class ScoreIntegrationTest {
 
         MvcResult createResultPlayer = mockMvc.perform(post("/player")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("userName", "userName")
+                        .param("username", "username")
                         .content(objectMapper.writeValueAsString(new Player())))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String responseContent = createResultPlayer.getResponse().getContentAsString();
+        String responseContentPlayer = createResultPlayer.getResponse().getContentAsString();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        Player createdPlayer = objectMapper.readValue(responseContent, Player.class);
+        Player createdPlayer = objectMapper.readValue(responseContentPlayer, Player.class);
 
         MvcResult createResultScore = mockMvc.perform(post("/score")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -64,21 +63,13 @@ public class ScoreIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-//        String createResponse = createResult.getResponse().getContentAsString();
-//        Score createdScore = objectMapper.readValue(createResponse, Score.class);
-//
-//        System.out.println("Id Created: " + createdScore.getScoreId());
-//
-//        MvcResult getResult = mockMvc.perform(get("/score/{id}", createdScore.getScoreId()))
-//                .andExpect(status().isOk())
-//                .andReturn();
-//
-//        String getResponse = getResult.getResponse().getContentAsString();
-//        Score retrievedScore = objectMapper.readValue(getResponse, Score.class);
-//
-//        assertNotNull(retrievedScore);
-//        assertEquals(playerId, retrievedScore.getPlayerId());
-//        assertEquals(value, retrievedScore.getValue());
+        String responseContentScore = createResultScore.getResponse().getContentAsString();
+
+        Score createdScore = objectMapper.readValue(responseContentScore, Score.class);
+
+        assertEquals("username", createdPlayer.getUsername());
+        assertEquals(createdPlayer.getPlayerId(), createdScore.getPlayerId());
+        assertEquals(Integer.valueOf(value), createdScore.getValue());
 
     }
 

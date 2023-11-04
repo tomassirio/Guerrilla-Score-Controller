@@ -21,7 +21,7 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
         this.scoreTable = scoreTable;
     }
 
-    public Score createScore(Long playerId, Integer value) {
+    public Score createScore(UUID playerId, Integer value) {
         Score newScore = Score.builder()
                 .scoreId(generateScoreId())
                 .playerId(playerId)
@@ -54,11 +54,11 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
         return optionalScore;
     }
 
-    public List<Score> getScoresByPlayer(Long playerId) {
+    public List<Score> getScoresByPlayer(UUID playerId) {
         QueryEnhancedRequest queryRequest = QueryEnhancedRequest.builder()
                 .queryConditional(
                         QueryConditional.keyEqualTo(Key.builder()
-                                .partitionValue(playerId)
+                                .sortValue(playerId.toString())
                                 .build()))
                 .build();
 

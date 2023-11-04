@@ -18,7 +18,6 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
@@ -39,9 +38,10 @@ public class ScoreDynamoDbRepositoryTest {
 
     @Test
     public void testCreateScore() {
+        UUID playerId = UUID.randomUUID();
         Score score = Score.builder()
                 .scoreId(UUID.randomUUID())
-                .playerId(1L)
+                .playerId(playerId)
                 .value(69)
                 .build();
 
@@ -57,16 +57,16 @@ public class ScoreDynamoDbRepositoryTest {
         Score newScore = scoreRepository.createScore(score.getPlayerId(), score.getValue());
         verify(scoreTable).putItem(putItemRequestCaptor.capture());
 
-
         PutItemEnhancedRequest putItemRequest = putItemRequestCaptor.getValue();
         assertEquals(putItemRequest.item(), newScore);
     }
 
     @Test
     public void testGetScore() {
+        UUID playerId = UUID.randomUUID();
         Score score = Score.builder()
                 .scoreId(UUID.randomUUID())
-                .playerId(1L)
+                .playerId(playerId)
                 .value(69)
                 .build();
 
@@ -89,7 +89,7 @@ public class ScoreDynamoDbRepositoryTest {
     }
 
     @Test
-    public void testGetScoreNotFound() {
+    public void testGetScore_ScoreNotFound() {
         UUID scoreId = UUID.randomUUID();
 
         GetItemEnhancedRequest getItemEnhancedRequest = GetItemEnhancedRequest.builder()
@@ -109,7 +109,7 @@ public class ScoreDynamoDbRepositoryTest {
     @Test
     public void testUpdateScore() {
         UUID scoreId = UUID.randomUUID();
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         Integer initialValue = 69;
         Integer updatedValue = 420;
         ScoreDynamoDbRepository scoreRepository = new ScoreDynamoDbRepository(scoreTable) {
@@ -142,20 +142,20 @@ public class ScoreDynamoDbRepositoryTest {
 
         assertTrue(updatedScore.isPresent());
         assertEquals(scoreId, updatedScore.get().getScoreId());
-        assertEquals(1L, updatedScore.get().getPlayerId());
+        assertEquals(playerId, updatedScore.get().getPlayerId());
         assertEquals(updatedValue, updatedScore.get().getValue());
     }
 
     @Test
-    public void testUpdateScoreNotFound() {
+    public void testUpdateScore_ScoreNotFound() {
         when(scoreTable.getItem(any(GetItemEnhancedRequest.class))).thenThrow(UnsupportedOperationException.class);
 
         UUID nonExistentScoreId = UUID.randomUUID();
-        int updatedValue = 200;
+        int updatedValue = 69;
 
         Optional<Score> updatedScore = scoreRepository.updateScore(nonExistentScoreId, updatedValue);
 
-        assertFalse(updatedScore.isPresent());
+        assertTrue(updatedScore.isEmpty());
     }
 
     @Test

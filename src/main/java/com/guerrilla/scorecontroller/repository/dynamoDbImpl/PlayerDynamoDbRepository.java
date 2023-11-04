@@ -1,10 +1,17 @@
 package com.guerrilla.scorecontroller.repository.dynamoDbImpl;
 
 import com.guerrilla.scorecontroller.model.Player;
+import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.PlayerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeAction;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -17,24 +24,16 @@ import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
 import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Repository
 @Slf4j
 public class PlayerDynamoDbRepository implements PlayerRepository {
-    private static final String PLAYER_TABLE = "PlayerTable";
-    private static final String PLAYER_ID = "playerId";
-    private static final String USER_NAME = "username";
-
-    private final DynamoDbClient dynamoDbClient;
+    private final DynamoDbTable<Player> playerTable;
 
     @Autowired
-    public PlayerDynamoDbRepository(DynamoDbClient dynamoDbClient) {
-        this.dynamoDbClient = dynamoDbClient;
+    public PlayerDynamoDbRepository(DynamoDbTable<Player> playerTable) {
+        this.playerTable = playerTable;
     }
 
     public Player createPlayer(String username) {
@@ -42,138 +41,60 @@ public class PlayerDynamoDbRepository implements PlayerRepository {
                 .playerId(generatePlayerId())
                 .username(username)
                 .build();
-        PutItemRequest putItemRequest = PutItemRequest.builder()
-                .tableName(PLAYER_TABLE)
-                .item(
-                        Map.of(
-                                PLAYER_ID, AttributeValue.builder()
-                                        .n(newPlayer.getPlayerId().toString())
-                                        .build(),
-                                USER_NAME, AttributeValue.builder()
-                                        .s(newPlayer.getUsername())
-                                        .build()
-                        )
-                )
-                .build();
 
-        dynamoDbClient.putItem(putItemRequest);
+        PutItemEnhancedRequest<Player> putItemEnhancedRequest = PutItemEnhancedRequest.builder(Player.class).item(newPlayer).build();
+
+        playerTable.putItem(putItemEnhancedRequest);
         return newPlayer;
     }
 
-    public Optional<Player> getPlayer(Long id) {
-        Map<String, AttributeValue> key = Map.of(
-                PLAYER_ID, AttributeValue.builder().n(id.toString()).build()
-        );
+    public Optional<Player> getPlayer(UUID playerId) {
+        log.info("Fetching player for playerId: " + playerId);
 
-        GetItemRequest getItemRequest = GetItemRequest.builder()
-                .tableName(PLAYER_TABLE)
-                .key(key)
+        GetItemEnhancedRequest getItemEnhancedRequest = GetItemEnhancedRequest.builder()
+                .key(
+                        Key.builder()
+                                .partitionValue(playerId.toString())
+                                .build())
                 .build();
-        Map<String, AttributeValue> item = dynamoDbClient.getItem(getItemRequest).item();
 
         Optional<Player> optionalPlayer = Optional.empty();
-        if (item != null) {
-            AttributeValue playerIdAttribute = item.get(PLAYER_ID);
-            AttributeValue usernameAttribute = item.get(USER_NAME);
-
-            if (playerIdAttribute != null && usernameAttribute != null) {
-                Long retrievedPlayerId = Long.valueOf(playerIdAttribute.s());
-                String retrievedUsername = usernameAttribute.s();
-
-                optionalPlayer = Optional.of(Player.builder()
-                        .playerId(retrievedPlayerId)
-                        .username(retrievedUsername)
-                        .build());
-            }
+        try {
+            optionalPlayer = Optional.of(playerTable.getItem(getItemEnhancedRequest));
+            log.info("Player retrieved: " + optionalPlayer);
+        } catch (UnsupportedOperationException exception) {
+            log.error(exception.getLocalizedMessage());
+            return optionalPlayer;
         }
         return optionalPlayer;
     }
 
     public List<Player> getPlayers() {
-        ScanRequest scanRequest = ScanRequest.builder()
-                .tableName(PLAYER_TABLE)
-                .build();
-
         List<Player> players = new ArrayList<>();
-        try {
-            ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
-            scanResponse.items().forEach(item -> {
-                Long playerId = Long.valueOf(item.get(PLAYER_ID).s());
-                String username = item.get(USER_NAME).s();
-                players.add(Player.builder()
-                        .playerId(playerId)
-                        .username(username)
-                        .build());
-            });
-        } catch (Exception e) {
-            log.error("Couldn't Scan table: " + PLAYER_TABLE);
-        }
+        PageIterable<Player> playerPage = playerTable.scan(ScanEnhancedRequest.builder().build());
+        playerPage.items().forEach(players::add);
         return players;
     }
 
-    public Optional<Player> updatePlayer(Long id, String username) {
-        Map<String, AttributeValue> key = Map.of(
-                PLAYER_ID, AttributeValue.builder().n(id.toString()).build()
-        );
+    public Optional<Player> updatePlayer(UUID id, String username) {
+        Optional<Player> optionalPlayer = getPlayer(id);
 
-        Optional<Player> optionalPlayer = Optional.empty();
+        if (optionalPlayer.isPresent()) {
+            Player player = optionalPlayer.get();
+            player.setUsername(username);
 
-        if (playerExists(key)) {
-            UpdateItemRequest updateItemRequest = UpdateItemRequest.builder()
-                    .tableName(PLAYER_TABLE)
-                    .key(key)
-                    .attributeUpdates(
-                            Map.of(
-                                    USER_NAME, AttributeValueUpdate.builder()
-                                            .value(AttributeValue.builder().s(username).build())
-                                            .action(AttributeAction.PUT)
-                                            .build()
-                            )
-                    )
-                    .returnValues(ReturnValue.ALL_NEW)
-                    .build();
-
-            Map<String, AttributeValue> attributes = dynamoDbClient.updateItem(updateItemRequest).attributes();
-
-            if (!attributes.isEmpty()) {
-                Long extractedPlayerId = Long.valueOf(attributes.get(PLAYER_ID).n());
-                String extractedUserName = attributes.get(USER_NAME).s();
-
-                optionalPlayer = Optional.of(Player.builder()
-                        .playerId(extractedPlayerId)
-                        .username(extractedUserName)
-                        .build());
-            }
+            playerTable.updateItem(player);
         }
 
         return optionalPlayer;
     }
 
-    private boolean playerExists(Map<String, AttributeValue> key) {
-        GetItemRequest getItemRequest = GetItemRequest.builder()
-                .tableName(PLAYER_TABLE)
-                .key(key)
-                .build();
-
-        Map<String, AttributeValue> item = dynamoDbClient.getItem(getItemRequest).item();
-
-        return item != null && !item.isEmpty();
+    public void deletePlayer(UUID id) {
+        playerTable.deleteItem(Key.builder().partitionValue(id.toString()).build());
+        log.info("Player Deleted: " + id);
     }
 
-    public void deletePlayer(Long id) {
-        Map<String, AttributeValue> key = Map.of(
-                PLAYER_ID, AttributeValue.builder().n(id.toString()).build()
-        );
-
-        DeleteItemRequest deleteItemRequest = DeleteItemRequest.builder()
-                .key(key)
-                .tableName(PLAYER_TABLE)
-                .build();
-
-        dynamoDbClient.deleteItem(deleteItemRequest);
-    }
-
-    protected long generatePlayerId() {
-        return new Random().nextLong();
+    protected UUID generatePlayerId() {
+        return UUID.randomUUID();
     }
 }

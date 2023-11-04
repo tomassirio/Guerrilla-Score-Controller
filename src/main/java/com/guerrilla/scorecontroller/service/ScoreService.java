@@ -19,7 +19,7 @@ public class ScoreService {
         this.scoreRepository = scoreRepository;
     }
 
-    public Score createScore(Long playerId, Integer value) {
+    public Score createScore(UUID playerId, Integer value) {
         return scoreRepository.createScore(playerId, value);
     }
 
@@ -33,7 +33,7 @@ public class ScoreService {
         }
     }
 
-    public List<Score> getScoresByPlayer(Long playerId) {
+    public List<Score> getScoresByPlayer(UUID playerId) {
         return scoreRepository.getScoresByPlayer(playerId);
     }
 

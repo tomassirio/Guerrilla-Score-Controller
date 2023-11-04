@@ -6,17 +6,10 @@ import com.guerrilla.scorecontroller.service.PlayerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -31,41 +24,39 @@ public class PlayerController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Player> getPlayerById(@PathVariable(name = "id") Long id) {
-        Player player = playerService.getPlayer(id);
+    @GetMapping
+    public ResponseEntity<Player> getPlayerById(@RequestParam String id) {
+        Player player = playerService.getPlayer(UUID.fromString(id));
 
         return ResponseEntity.ok(player);
     }
 
-    @GetMapping
-    public ResponseEntity<List<Player>> getPlayers(){
+    @GetMapping("s")
+    public ResponseEntity<List<Player>> getPlayers() {
         List<Player> players = playerService.getPlayers();
 
         return ResponseEntity.ok(players);
     }
 
     @PostMapping
-    public ResponseEntity<Player> createPlayer(@RequestParam(name = "userName") String userName) {
+    public ResponseEntity<Player> createPlayer(@RequestParam(name = "username") String userName) {
         Player player = playerService.createPlayer(userName);
 
-        log.info("Player Created: "+ player.getPlayerId() + "; " + player.getUsername());
+        log.info("Player Created: " + player.getPlayerId() + "; " + player.getUsername());
         return ResponseEntity.ok(player);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Player> changePlayerUsername(@PathVariable(name = "id") Long id, @RequestParam("userName") String userName) {
-        Player player = playerService.renamePlayer(id, userName);
+    @PutMapping
+    public ResponseEntity<Player> changePlayerUsername(@RequestParam(name = "id") String id, @RequestParam("userName") String userName) {
+        Player player = playerService.renamePlayer(UUID.fromString(id), userName);
 
-        log.info("Player Changed User Name: "+ player.getPlayerId() + "; " + player.getUsername());
+        log.info("Player Changed User Name: " + player.getPlayerId() + "; " + player.getUsername());
         return ResponseEntity.ok(player);
     }
 
-    @DeleteMapping("/{id}")
-    public void deletePlayer(@PathVariable(name = "id") Long id) {
-        Player player = playerService.getPlayer(id);
-        log.info("Player Deleted: "+ player.getPlayerId() + "; " + player.getUsername());
-        playerService.deletePlayer(player.getPlayerId());
+    @DeleteMapping
+    public void deletePlayer(@RequestParam(name = "id") String id) {
+        playerService.deletePlayer(UUID.fromString(id));
     }
 
     @ExceptionHandler(PlayerNotFoundException.class)

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PlayerService {
@@ -18,13 +19,13 @@ public class PlayerService {
         this.playerDynamoDbRepository = playerDynamoDbRepository;
     }
 
-    public Player getPlayer(Long id) {
+    public Player getPlayer(UUID id) {
         Optional<Player> player = playerDynamoDbRepository.getPlayer(id);
 
         if (player.isPresent()) {
             return player.get();
         } else {
-            throw new PlayerNotFoundException(id);
+            throw new PlayerNotFoundException(id.toString());
         }
     }
 
@@ -35,17 +36,17 @@ public class PlayerService {
     public Player createPlayer(String userName) {
         return playerDynamoDbRepository.createPlayer(userName);
     }
-    public Player renamePlayer(Long id, String userName) {
+    public Player renamePlayer(UUID id, String userName) {
         Optional<Player> player = playerDynamoDbRepository.updatePlayer(id, userName);
 
         if (player.isPresent()) {
             return player.get();
         } else {
-            throw new PlayerNotFoundException(id);
+            throw new PlayerNotFoundException(id.toString());
         }
     }
 
-    public void deletePlayer(Long id) {
+    public void deletePlayer(UUID id) {
         playerDynamoDbRepository.deletePlayer(id);
     }
 
