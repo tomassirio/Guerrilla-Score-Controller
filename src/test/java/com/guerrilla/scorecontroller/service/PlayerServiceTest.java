@@ -2,7 +2,7 @@ package com.guerrilla.scorecontroller.service;
 
 import com.guerrilla.scorecontroller.exception.PlayerNotFoundException;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.PlayerDynamoDbRepository;
+import com.guerrilla.scorecontroller.repository.dynamoDbImpl.PlayerDynamoDbRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +34,7 @@ public class PlayerServiceTest {
 
     @Test
     public void testGetPlayerById() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         Player player = Player.builder()
                 .playerId(playerId)
                 .username("Mr Potato")
@@ -48,7 +49,7 @@ public class PlayerServiceTest {
 
     @Test
     public void testGetPlayerById_PlayerNotFoundException() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
 
         when(playerDynamoDbRepository.getPlayer(playerId)).thenReturn(Optional.empty());
 
@@ -57,13 +58,15 @@ public class PlayerServiceTest {
 
     @Test
     public void testGetPlayers() {
+        UUID playerId = UUID.randomUUID();
+
         List<Player> players = List.of(
                 Player.builder()
-                        .playerId(1L)
+                        .playerId(playerId)
                         .username("Mr Potato")
                         .build(),
                 Player.builder()
-                        .playerId(2L)
+                        .playerId(playerId)
                         .username("Rex")
                         .build()
         );
@@ -77,9 +80,10 @@ public class PlayerServiceTest {
 
     @Test
     public void testCreatePlayer() {
+        UUID playerId = UUID.randomUUID();
         String userName = "Mr Potato";
         Player createdPlayer = Player.builder()
-                .playerId(1L)
+                .playerId(playerId)
                 .username(userName)
                 .build();
 
@@ -92,7 +96,7 @@ public class PlayerServiceTest {
 
     @Test
     public void testRenamePlayer() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String newUserName = "Mr Potato";
         Player updatedPlayer = Player.builder()
                 .playerId(playerId)
@@ -108,7 +112,7 @@ public class PlayerServiceTest {
 
     @Test
     public void testRenamePlayer_PlayerNotFoundException() {
-        Long playerId = 1L;
+        UUID playerId = UUID.randomUUID();
         String newUserName = "Mr Potato";
 
         when(playerDynamoDbRepository.updatePlayer(playerId, newUserName)).thenReturn(Optional.empty());
@@ -118,8 +122,7 @@ public class PlayerServiceTest {
 
     @Test
     public void testDeletePlayer() {
-        Long playerId = 1L;
-
+        UUID playerId = UUID.randomUUID();
 
         assertDoesNotThrow(() -> playerService.deletePlayer(playerId));
     }

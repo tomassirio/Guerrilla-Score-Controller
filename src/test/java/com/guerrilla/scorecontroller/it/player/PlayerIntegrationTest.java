@@ -1,88 +1,124 @@
 package com.guerrilla.scorecontroller.it.player;
 
-import com.guerrilla.scorecontroller.ScoreControllerApplication;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guerrilla.scorecontroller.it.config.AwsConfig;
+import com.guerrilla.scorecontroller.it.config.TestcontainersConfig;
+import com.guerrilla.scorecontroller.it.config.DbConfig;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.PlayerDynamoDbRepository;
-import com.guerrilla.scorecontroller.repository.PlayerRepository;
-import com.guerrilla.scorecontroller.service.PlayerService;
+import com.guerrilla.scorecontroller.model.Score;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = ScoreControllerApplication.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Import({TestcontainersConfig.class, AwsConfig.class, DbConfig.class})
 public class PlayerIntegrationTest {
+    private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Autowired
-    private PlayerService playerService;
+    @Qualifier("PlayerTableTest")
+    DynamoDbTable<Player> playerTableTest;
 
-    @MockBean(PlayerDynamoDbRepository.class)
-    private PlayerRepository playerRepository;
-
-    @Test
-    public void testGetAllPlayers() {
-        Player player1 = new Player(1L, "Mr Potato");
-        Player player2 = new Player(2L, "Rex");
-        List<Player> mockPlayers = List.of(player1, player2);
-
-        when(playerRepository.getPlayers()).thenReturn(mockPlayers);
-
-        List<Player> players = playerService.getPlayers();
-
-        assertEquals(2, players.size());
-        assertEquals(player1, players.get(0));
-        assertEquals(player2, players.get(1));
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    public void testGetPlayerById() {
-        Player player = new Player(1L, "Mr Potato");
+    public void testCreateAndGetPlayer() throws Exception {
+        String username = "Mr Potato";
 
-        when(playerRepository.getPlayer(1L)).thenReturn(Optional.of(player));
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", username)
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        Player retrievedPlayer = playerService.getPlayer(1L);
+        String responseContentPlayerCreated = createResultPlayer.getResponse().getContentAsString();
 
-        assertEquals(player, retrievedPlayer);
+        Player createdPlayer = objectMapper.readValue(responseContentPlayerCreated, Player.class);
+
+        MvcResult getResultPlayer = mockMvc.perform(get("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", createdPlayer.getPlayerId().toString())
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayerRetrieved = getResultPlayer.getResponse().getContentAsString();
+
+        Player retrievedPlayer = objectMapper.readValue(responseContentPlayerRetrieved, Player.class);
+
+        Assert.assertEquals(username, retrievedPlayer.getUsername());
+        Assert.assertEquals(createdPlayer, retrievedPlayer);
     }
 
     @Test
-    public void testUpdatePlayerUsername() {
-        Long playerId = 1L;
-        String newUsername = "Updated Mr Potato";
-        Player originalPlayer = new Player(playerId, "Mr Potato");
+    public void testUpdatePlayerUsername() throws Exception {
+        String initialUsername = "Mr Potato";
+        String updatedUsername = "Rex";
 
-        when(playerRepository.getPlayer(playerId)).thenReturn(Optional.of(originalPlayer));
-        when(playerRepository.updatePlayer(playerId, newUsername))
-                .thenReturn(Optional.of(new Player(playerId, newUsername)));
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", initialUsername)
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        Player updatedPlayer = playerService.renamePlayer(playerId, newUsername);
+        String responseContentPlayerCreated = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayerCreated, Player.class);
 
-        assertEquals(newUsername, updatedPlayer.getUsername());
+        MvcResult updateResultPlayer = mockMvc.perform(put("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", createdPlayer.getPlayerId().toString())
+                        .param("userName", updatedUsername)
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayerUpdated = updateResultPlayer.getResponse().getContentAsString();
+        Player updatedPlayer = objectMapper.readValue(responseContentPlayerUpdated, Player.class);
+
+        Assert.assertEquals(updatedUsername, updatedPlayer.getUsername());
+        Assert.assertNotEquals(initialUsername, updatedPlayer.getUsername());
     }
 
     @Test
-    public void testCreatePlayer() {
-        when(playerRepository.createPlayer("Mr Potato")).thenReturn(new Player(1L, "Mr Potato"));
+    public void testDeletePlayer() throws Exception {
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", "Mr Potato")
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        Player createdPlayer = playerService.createPlayer("Mr Potato");
+        String responseContentPlayerCreated = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayerCreated, Player.class);
+        UUID playerId = createdPlayer.getPlayerId();
 
-        assertEquals("Mr Potato", createdPlayer.getUsername());
+        mockMvc.perform(delete("/player")
+                        .param("playerId", playerId.toString()))
+                .andExpect(status().isOk());
     }
-
-    @Test
-    public void testDeletePlayer() {
-        when(playerRepository.getPlayer(1L)).thenReturn(Optional.of(new Player(1L, "Mr Potato")));
-
-        playerService.deletePlayer(1L);
-
-        Mockito.verify(playerRepository, Mockito.times(1)).deletePlayer(1L);
-    }
-
 }
