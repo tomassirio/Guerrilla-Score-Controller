@@ -20,7 +20,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -76,6 +79,76 @@ public class ScoreIntegrationTest {
         assertEquals(createdPlayer.getPlayerId(), createdScore.getPlayerId());
         assertEquals(Integer.valueOf(value), createdScore.getValue());
 
+    }
+
+    @Test
+    public void testUpdateScoreValue() throws Exception {
+        Integer initialValue = 50;
+        Integer updatedValue = 75;
+
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", "TestPlayer")
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayer = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayer, Player.class);
+
+        MvcResult createResultScore = mockMvc.perform(post("/score")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", createdPlayer.getPlayerId().toString())
+                        .param("value", Integer.toString(initialValue))
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentScore = createResultScore.getResponse().getContentAsString();
+        Score createdScore = objectMapper.readValue(responseContentScore, Score.class);
+
+        MvcResult updateResultScore = mockMvc.perform(put("/score")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("scoreId", createdScore.getScoreId().toString())
+                        .param("value", Integer.toString(updatedValue))
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentUpdatedScore = updateResultScore.getResponse().getContentAsString();
+        Score updatedScore = objectMapper.readValue(responseContentUpdatedScore, Score.class);
+
+        assertEquals(updatedValue, updatedScore.getValue());
+        assertNotEquals(initialValue, updatedScore.getValue());
+    }
+
+    @Test
+    public void testDeleteScore() throws Exception {
+        // Create a player
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", "TestPlayer")
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayer = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayer, Player.class);
+
+        MvcResult createResultScore = mockMvc.perform(post("/score")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", createdPlayer.getPlayerId().toString())
+                        .param("value", Integer.toString(100))
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentScore = createResultScore.getResponse().getContentAsString();
+        Score createdScore = objectMapper.readValue(responseContentScore, Score.class);
+
+        mockMvc.perform(delete("/score")
+                        .param("scoreId", createdScore.getScoreId().toString()))
+                .andExpect(status().isOk());
     }
 
 }

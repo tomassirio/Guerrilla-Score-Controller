@@ -20,9 +20,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -71,5 +72,53 @@ public class PlayerIntegrationTest {
 
         Assert.assertEquals(username, retrievedPlayer.getUsername());
         Assert.assertEquals(createdPlayer, retrievedPlayer);
+    }
+
+    @Test
+    public void testUpdatePlayerUsername() throws Exception {
+        String initialUsername = "Mr Potato";
+        String updatedUsername = "Rex";
+
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", initialUsername)
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayerCreated = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayerCreated, Player.class);
+
+        MvcResult updateResultPlayer = mockMvc.perform(put("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("playerId", createdPlayer.getPlayerId().toString())
+                        .param("userName", updatedUsername)
+                        .content(objectMapper.writeValueAsString(new Score())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayerUpdated = updateResultPlayer.getResponse().getContentAsString();
+        Player updatedPlayer = objectMapper.readValue(responseContentPlayerUpdated, Player.class);
+
+        Assert.assertEquals(updatedUsername, updatedPlayer.getUsername());
+        Assert.assertNotEquals(initialUsername, updatedPlayer.getUsername());
+    }
+
+    @Test
+    public void testDeletePlayer() throws Exception {
+        MvcResult createResultPlayer = mockMvc.perform(post("/player")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("username", "Mr Potato")
+                        .content(objectMapper.writeValueAsString(new Player())))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseContentPlayerCreated = createResultPlayer.getResponse().getContentAsString();
+        Player createdPlayer = objectMapper.readValue(responseContentPlayerCreated, Player.class);
+        UUID playerId = createdPlayer.getPlayerId();
+
+        mockMvc.perform(delete("/player")
+                        .param("playerId", playerId.toString()))
+                .andExpect(status().isOk());
     }
 }
