@@ -2,7 +2,7 @@ package com.guerrilla.scorecontroller.it.player;
 
 import com.guerrilla.scorecontroller.ScoreControllerApplication;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.PlayerDynamoDbRepository;
+import com.guerrilla.scorecontroller.repository.dynamoDbImpl.PlayerDynamoDbRepository;
 import com.guerrilla.scorecontroller.repository.PlayerRepository;
 import com.guerrilla.scorecontroller.service.PlayerService;
 import org.junit.jupiter.api.Test;

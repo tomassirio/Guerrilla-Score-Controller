@@ -2,7 +2,7 @@ package com.guerrilla.scorecontroller.service;
 
 import com.guerrilla.scorecontroller.exception.PlayerNotFoundException;
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.repository.PlayerDynamoDbRepository;
+import com.guerrilla.scorecontroller.repository.dynamoDbImpl.PlayerDynamoDbRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

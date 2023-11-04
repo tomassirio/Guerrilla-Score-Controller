@@ -1,6 +1,7 @@
-package com.guerrilla.scorecontroller.repository;
+package com.guerrilla.scorecontroller.repository.dynamoDbImpl;
 
 import com.guerrilla.scorecontroller.model.Player;
+import com.guerrilla.scorecontroller.repository.PlayerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
