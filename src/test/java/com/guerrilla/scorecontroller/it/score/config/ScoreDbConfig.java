@@ -40,37 +40,19 @@ public class ScoreDbConfig {
                 .endpointOverride(localStack.getEndpointOverride(DYNAMODB))
                 .build();
     }
-
-//    @EventListener
-//    @SuppressWarnings("unchecked")
-//    public void onApplicationReady(ApplicationReadyEvent applicationReadyEvent) {
-//        ApplicationContext applicationContext = applicationReadyEvent.getApplicationContext();
-//        DynamoDbTable<Score> scoreTable = applicationContext.getBean("ScoreTableTest", DynamoDbTable.class);
-//        DynamoDbTable<Player> playerTable = applicationContext.getBean("PlayerTableTest", DynamoDbTable.class);
-//
-//        if (!doesTableExist(dynamoDbClient, playerTableName)) {
-//            DynamoDbTable<Player> playerTable = dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
-//
-//            playerTable.createTable();
-//        }
-//
-//
-//        if (!doesTableExist(dynamoDbClient, playerTableName)) {
-//            DynamoDbTable<Player> playerTable = dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
-//
-//            playerTable.createTable();
-//        }
-//
-//        scoreTable.createTable();
-//        playerTable.createTable();
-//    }
-
     @Bean("ScoreTableTest")
     public DynamoDbTable<Score> scoreTableLocal(@Qualifier("DynamoDbClientLocal") DynamoDbClient dynamoDbClient, @Value("${score.table}") String scoreTableName) {
         DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
         TableSchema<Score> scoreDocumentSchema = TableSchema.fromBean(Score.class);
+
+        if (!doesTableExist(dynamoDbClient, scoreTableName)) {
+            DynamoDbTable<Score> scoreTable = dynamoDbEnhancedClient.table(scoreTableName, scoreDocumentSchema);
+
+            scoreTable.createTable();
+        }
+
         return dynamoDbEnhancedClient.table(scoreTableName, scoreDocumentSchema);
     }
 
@@ -80,15 +62,23 @@ public class ScoreDbConfig {
                 .dynamoDbClient(dynamoDbClient)
                 .build();
         TableSchema<Player> playerDocumentSchema = TableSchema.fromBean(Player.class);
+
+        if (!doesTableExist(dynamoDbClient, playerTableName)) {
+            DynamoDbTable<Player> playerTable = dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
+
+            playerTable.createTable();
+        }
+
         return dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
     }
+
 
     private boolean doesTableExist(DynamoDbClient dynamoDbClient, String tableName) {
         try {
             DescribeTableResponse response = dynamoDbClient.describeTable(DescribeTableRequest.builder()
                     .tableName(tableName)
                     .build());
-            return response == null || !TableStatus.ACTIVE.equals(response.table().tableStatus());
+            return response != null && response.table().tableStatus().equals(TableStatus.ACTIVE);
         } catch (ResourceNotFoundException e) {
             log.warn("Table: " + tableName + " Doesn't exist yet");
             return false;

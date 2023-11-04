@@ -21,8 +21,4 @@ public class Score {
     private Integer value;
     @DynamoDbPartitionKey
     public UUID getScoreId() {return this.scoreId;}
-    @DynamoDbSortKey
-    public UUID getPlayerId() {
-        return this.playerId;
-    }
 }

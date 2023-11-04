@@ -6,6 +6,8 @@ import com.guerrilla.scorecontroller.it.config.TestcontainersConfig;
 import com.guerrilla.scorecontroller.it.score.config.ScoreDbConfig;
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
+import org.junit.After;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,16 +47,7 @@ public class ScoreIntegrationTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        scoreTableTest.createTable();
-        playerTableTest.createTable();
     }
-
-    @AfterEach
-    void cleanUp() {
-        scoreTableTest.deleteTable();
-        playerTableTest.deleteTable();
-    }
-
     @Test
     public void testCreateAndGetScore() throws Exception {
         int value = 69;

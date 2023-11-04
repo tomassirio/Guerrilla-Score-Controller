@@ -41,7 +41,7 @@ public class DynamoDbConfig {
                 .build();
         TableSchema<Score> scoreDocumentSchema = TableSchema.fromBean(Score.class);
 
-        if (doesTableExist(dynamoDbClient, scoreTableName)) {
+        if (!doesTableExist(dynamoDbClient, scoreTableName)) {
             DynamoDbTable<Score> scoreTable = dynamoDbEnhancedClient.table(scoreTableName, scoreDocumentSchema);
 
             scoreTable.createTable();
@@ -71,7 +71,7 @@ public class DynamoDbConfig {
             DescribeTableResponse response = dynamoDbClient.describeTable(DescribeTableRequest.builder()
                     .tableName(tableName)
                     .build());
-            return response == null || !TableStatus.ACTIVE.equals(response.table().tableStatus());
+            return response != null && response.table().tableStatus().equals(TableStatus.ACTIVE);
         } catch (ResourceNotFoundException e) {
             log.warn("Table: " + tableName + " Doesn't exist yet");
             return false;
