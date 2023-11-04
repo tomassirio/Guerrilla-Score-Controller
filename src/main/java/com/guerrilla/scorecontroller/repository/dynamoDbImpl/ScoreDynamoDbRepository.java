@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.*;
 
@@ -56,26 +58,32 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
     }
 
     public List<Score> getScoresByPlayer(UUID playerId) {
-        QueryEnhancedRequest queryRequest = QueryEnhancedRequest.builder()
-                .queryConditional(
-                        QueryConditional.keyEqualTo(Key.builder()
-                                .sortValue(playerId.toString())
-                                .build()))
-                .build();
-
         List<Score> scores = new ArrayList<>();
         try {
-            PageIterable<Score> queryResponse = scoreTable.query(queryRequest);
+            ScanEnhancedRequest scanRequest = ScanEnhancedRequest.builder()
+                    .filterExpression(Expression.builder()
+                            .expression("#a = :b")
+                            .putExpressionName("#a", "playerId")
+                            .putExpressionValue(":b", AttributeValue.builder().s(playerId.toString()).build())
+                            .build())
+                    .build();
 
-            if (queryResponse != null) {
-                queryResponse.items().forEach(scores::add);
+            PageIterable<Score> scanResponse = scoreTable.scan(scanRequest);
+
+            if (scanResponse != null) {
+                scanResponse.items().forEach(scores::add);
             } else {
-                log.warn("Query response is null for player: " + playerId);
+                log.warn("Scan response is null for player: " + playerId);
             }
         } catch (UnsupportedOperationException e) {
-            log.error("Couldn't query table: " + scoreTable.tableName(), e);
+            log.error("Couldn't scan table: " + scoreTable.tableName(), e);
         }
         return scores;
+    }
+
+    @Override
+    public Optional<Score> getHighestScore(UUID playerId) {
+        return getScoresByPlayer(playerId).stream().max(Comparator.comparing(Score::getValue));
     }
 
     public Optional<Score> updateScore(UUID scoreId, Integer value) {
