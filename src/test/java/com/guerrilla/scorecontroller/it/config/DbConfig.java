@@ -1,4 +1,4 @@
-package com.guerrilla.scorecontroller.it.score.config;
+package com.guerrilla.scorecontroller.it.config;
 
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
@@ -6,12 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -28,7 +25,7 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("test")
 @Slf4j
-public class ScoreDbConfig {
+public class DbConfig {
 
     @Autowired
     LocalStackContainer localStack;

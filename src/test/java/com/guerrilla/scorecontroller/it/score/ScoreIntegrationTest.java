@@ -3,12 +3,9 @@ package com.guerrilla.scorecontroller.it.score;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.guerrilla.scorecontroller.it.config.AwsConfig;
 import com.guerrilla.scorecontroller.it.config.TestcontainersConfig;
-import com.guerrilla.scorecontroller.it.score.config.ScoreDbConfig;
+import com.guerrilla.scorecontroller.it.config.DbConfig;
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
-import org.junit.After;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestcontainersConfig.class, AwsConfig.class, ScoreDbConfig.class})
+@Import({TestcontainersConfig.class, AwsConfig.class, DbConfig.class})
 public class ScoreIntegrationTest {
     private ObjectMapper objectMapper;
     @Autowired

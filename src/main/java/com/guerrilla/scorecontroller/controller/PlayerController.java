@@ -25,13 +25,13 @@ public class PlayerController {
 
 
     @GetMapping
-    public ResponseEntity<Player> getPlayerById(@RequestParam String id) {
-        Player player = playerService.getPlayer(UUID.fromString(id));
+    public ResponseEntity<Player> getPlayerById(@RequestParam String playerId) {
+        Player player = playerService.getPlayer(UUID.fromString(playerId));
 
         return ResponseEntity.ok(player);
     }
 
-    @GetMapping("s")
+    @GetMapping("/all")
     public ResponseEntity<List<Player>> getPlayers() {
         List<Player> players = playerService.getPlayers();
 
@@ -47,16 +47,16 @@ public class PlayerController {
     }
 
     @PutMapping
-    public ResponseEntity<Player> changePlayerUsername(@RequestParam(name = "id") String id, @RequestParam("userName") String userName) {
-        Player player = playerService.renamePlayer(UUID.fromString(id), userName);
+    public ResponseEntity<Player> changePlayerUsername(@RequestParam(name = "playerId") String playerId, @RequestParam("userName") String userName) {
+        Player player = playerService.renamePlayer(UUID.fromString(playerId), userName);
 
         log.info("Player Changed User Name: " + player.getPlayerId() + "; " + player.getUsername());
         return ResponseEntity.ok(player);
     }
 
     @DeleteMapping
-    public void deletePlayer(@RequestParam(name = "id") String id) {
-        playerService.deletePlayer(UUID.fromString(id));
+    public void deletePlayer(@RequestParam(name = "playerId") String playerId) {
+        playerService.deletePlayer(UUID.fromString(playerId));
     }
 
     @ExceptionHandler(PlayerNotFoundException.class)
