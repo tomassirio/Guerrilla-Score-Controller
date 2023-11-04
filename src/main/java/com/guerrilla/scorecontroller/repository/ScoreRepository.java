@@ -11,6 +11,7 @@ public interface ScoreRepository {
     Score createScore(UUID playerId, Integer value);
     Optional<Score> getScore(UUID scoreId);
     List<Score> getScoresByPlayer(UUID playerId);
+    Optional<Score> getHighestScore(UUID playerId);
     Optional<Score> updateScore(UUID scoreId, Integer value);
     void deleteScore(UUID scoreId);
 }

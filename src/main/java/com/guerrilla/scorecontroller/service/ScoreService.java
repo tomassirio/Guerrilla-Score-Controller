@@ -1,5 +1,6 @@
 package com.guerrilla.scorecontroller.service;
 
+import com.guerrilla.scorecontroller.exception.PlayerHasNoScoresException;
 import com.guerrilla.scorecontroller.exception.ScoreNotFoundException;
 import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.ScoreRepository;
@@ -35,6 +36,16 @@ public class ScoreService {
 
     public List<Score> getScoresByPlayer(UUID playerId) {
         return scoreRepository.getScoresByPlayer(playerId);
+    }
+
+    public Score getHighestScore(UUID playerId) {
+        Optional<Score> score = scoreRepository.getHighestScore(playerId);
+
+        if (score.isPresent()) {
+            return score.get();
+        } else {
+            throw new PlayerHasNoScoresException(playerId.toString());
+        }
     }
 
     public Score updateScore(UUID scoreId, Integer value) {
