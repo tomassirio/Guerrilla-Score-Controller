@@ -6,9 +6,11 @@ import com.guerrilla.scorecontroller.it.config.TestcontainersConfig;
 import com.guerrilla.scorecontroller.it.score.config.ScoreDbConfig;
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -16,13 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.Map;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -35,9 +34,25 @@ public class ScoreIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    @Qualifier("ScoreTableTest")
+    DynamoDbTable<Score> scoreTableTest;
+
+    @Autowired
+    @Qualifier("PlayerTableTest")
+    DynamoDbTable<Player> playerTableTest;
+
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
+        scoreTableTest.createTable();
+        playerTableTest.createTable();
+    }
+
+    @AfterEach
+    void cleanUp() {
+        scoreTableTest.deleteTable();
+        playerTableTest.deleteTable();
     }
 
     @Test

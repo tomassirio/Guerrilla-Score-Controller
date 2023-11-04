@@ -11,7 +11,6 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfig {
     private static final DockerImageName LOCALSTACK_IMAGE_NAME = DockerImageName.parse("localstack/localstack");
-
     @Rule
     @Bean
     public LocalStackContainer localStackContainer() {

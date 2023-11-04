@@ -9,7 +9,6 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class AwsConfig {
-
     @Bean
     public AwsCredentialsProvider awsCredentialsProvider(LocalStackContainer localStack) {
         AwsBasicCredentials creds = AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey());
