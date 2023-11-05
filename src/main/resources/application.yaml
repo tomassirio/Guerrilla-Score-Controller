@@ -12,8 +12,12 @@ cloud:
     region:
       auto: false
       static: eu-west-2
+      use-default-aws-region-chain: true
     dynamo:
       score:
         table: "ScoreTable"
       player:
         table: "PlayerTable"
+spring:
+  main:
+    allow-bean-definition-overriding: true
