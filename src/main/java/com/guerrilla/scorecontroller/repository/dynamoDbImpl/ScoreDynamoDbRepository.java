@@ -4,11 +4,16 @@ import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.ScoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.model.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.util.*;
 
@@ -18,7 +23,7 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
     private final DynamoDbTable<Score> scoreTable;
 
     @Autowired
-    public ScoreDynamoDbRepository(@Qualifier("ScoreTable") DynamoDbTable<Score> scoreTable) {
+    public ScoreDynamoDbRepository(DynamoDbTable<Score> scoreTable) {
         this.scoreTable = scoreTable;
     }
 
