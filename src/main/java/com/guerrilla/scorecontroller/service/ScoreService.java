@@ -6,6 +6,7 @@ import com.guerrilla.scorecontroller.repository.ScoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,16 @@ public class ScoreService {
 
     public List<Score> getScoresByPlayer(UUID playerId) {
         return scoreRepository.getScoresByPlayer(playerId);
+    }
+
+    public Score getHighestScoreByPlayer(UUID playerId) {
+        Optional<Score> highestScore = getScoresByPlayer(playerId).stream().max(Comparator.comparing(Score::getValue));
+
+        if (highestScore.isPresent()) {
+            return highestScore.get();
+        } else {
+            throw new ScoreNotFoundException(highestScore.toString());
+        }
     }
 
     public Score updateScore(UUID scoreId, Integer value) {
