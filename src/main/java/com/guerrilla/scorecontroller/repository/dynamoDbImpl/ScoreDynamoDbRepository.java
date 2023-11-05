@@ -80,6 +80,11 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
         return scores;
     }
 
+    @Override
+    public Optional<Score> getHighestScore(UUID playerId) {
+        return getScoresByPlayer(playerId).stream().max(Comparator.comparing(Score::getValue));
+    }
+
     public Optional<Score> updateScore(UUID scoreId, Integer value) {
         Optional<Score> optionalScore = getScore(scoreId);
 
