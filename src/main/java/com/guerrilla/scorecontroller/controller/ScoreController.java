@@ -46,7 +46,7 @@ public class ScoreController {
 
     @GetMapping("/player/highest")
     public ResponseEntity<Score> getHighestScore(@RequestParam String playerId) {
-        Score score = scoreService.getHighestScore(UUID.fromString(playerId));
+        Score score = scoreService.getHighestScoreByPlayer(UUID.fromString(playerId));
 
         return ResponseEntity.ok(score);
     }

@@ -1,43 +1,70 @@
 package com.guerrilla.scorecontroller.it.player;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.guerrilla.scorecontroller.it.config.AwsConfig;
-import com.guerrilla.scorecontroller.it.config.TestcontainersConfig;
-import com.guerrilla.scorecontroller.it.config.DbConfig;
+import com.guerrilla.scorecontroller.it.config.DynamoDbConfigTest;
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.testcontainers.containers.localstack.LocalStackContainer.Service.DYNAMODB;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Import({TestcontainersConfig.class, AwsConfig.class, DbConfig.class})
+@ActiveProfiles("it")
+@ContextConfiguration(classes = DynamoDbConfigTest.class)
+@Testcontainers
 public class PlayerIntegrationTest {
     private ObjectMapper objectMapper;
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    @Qualifier("PlayerTableTest")
-    DynamoDbTable<Player> playerTableTest;
+    @Container
+    static LocalStackContainer localStack =
+            new LocalStackContainer(DockerImageName.parse("localstack/localstack:2.2"));
+
+    @BeforeAll
+    static void beforeAll() throws IOException, InterruptedException {
+        localStack.execInContainer("awslocal", "dynamodb", "create-table",
+                "--table-name", "PlayerTableTest",
+                "--attribute-definitions", "AttributeName=playerId,AttributeType=S",
+                "--attribute-definitions", "AttributeName=username,AttributeType=S",
+                "--key-schema", "AttributeName=playerId,KeyType=HASH",
+                "--provisioned-throughput", "ReadCapacityUnits=5,WriteCapacityUnits=5"
+        );
+    }
+
+    @DynamicPropertySource
+    static void overrideConfiguration(DynamicPropertyRegistry registry) {
+        registry.add("spring.cloud.aws.dynamodb.endpoint", () -> localStack.getEndpointOverride(DYNAMODB));
+        registry.add("spring.cloud.aws.credentials.access-key", () -> localStack.getAccessKey());
+        registry.add("spring.cloud.aws.credentials.secret-key", () -> localStack.getSecretKey());
+        registry.add("spring.cloud.aws.region.static", () -> localStack.getRegion());
+    }
 
     @BeforeEach
     void setUp() {
@@ -70,8 +97,8 @@ public class PlayerIntegrationTest {
 
         Player retrievedPlayer = objectMapper.readValue(responseContentPlayerRetrieved, Player.class);
 
-        Assert.assertEquals(username, retrievedPlayer.getUsername());
-        Assert.assertEquals(createdPlayer, retrievedPlayer);
+        Assertions.assertEquals(username, retrievedPlayer.getUsername());
+        Assertions.assertEquals(createdPlayer, retrievedPlayer);
     }
 
     @Test
@@ -100,8 +127,8 @@ public class PlayerIntegrationTest {
         String responseContentPlayerUpdated = updateResultPlayer.getResponse().getContentAsString();
         Player updatedPlayer = objectMapper.readValue(responseContentPlayerUpdated, Player.class);
 
-        Assert.assertEquals(updatedUsername, updatedPlayer.getUsername());
-        Assert.assertNotEquals(initialUsername, updatedPlayer.getUsername());
+        Assertions.assertEquals(updatedUsername, updatedPlayer.getUsername());
+        Assertions.assertNotEquals(initialUsername, updatedPlayer.getUsername());
     }
 
     @Test

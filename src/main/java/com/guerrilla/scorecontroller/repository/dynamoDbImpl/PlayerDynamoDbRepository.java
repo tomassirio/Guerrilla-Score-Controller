@@ -1,11 +1,9 @@
 package com.guerrilla.scorecontroller.repository.dynamoDbImpl;
 
 import com.guerrilla.scorecontroller.model.Player;
-import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.PlayerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -13,19 +11,11 @@ import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeAction;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValueUpdate;
-import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
-import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
-import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
-import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @Slf4j
@@ -33,7 +23,7 @@ public class PlayerDynamoDbRepository implements PlayerRepository {
     private final DynamoDbTable<Player> playerTable;
 
     @Autowired
-    public PlayerDynamoDbRepository(@Qualifier("PlayerTable") DynamoDbTable<Player> playerTable) {
+    public PlayerDynamoDbRepository(DynamoDbTable<Player> playerTable) {
         this.playerTable = playerTable;
     }
 

@@ -4,7 +4,6 @@ import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.ScoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
@@ -20,7 +19,7 @@ public class ScoreDynamoDbRepository implements ScoreRepository {
     private final DynamoDbTable<Score> scoreTable;
 
     @Autowired
-    public ScoreDynamoDbRepository(@Qualifier("ScoreTable") DynamoDbTable<Score> scoreTable) {
+    public ScoreDynamoDbRepository(DynamoDbTable<Score> scoreTable) {
         this.scoreTable = scoreTable;
     }
 

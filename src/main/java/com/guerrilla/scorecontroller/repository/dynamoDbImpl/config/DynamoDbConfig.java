@@ -1,50 +1,43 @@
-package com.guerrilla.scorecontroller.it.config;
+package com.guerrilla.scorecontroller.repository.dynamoDbImpl.config;
 
 import com.guerrilla.scorecontroller.model.Player;
 import com.guerrilla.scorecontroller.model.Score;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Profile;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableRequest;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.model.TableStatus;
 
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.DYNAMODB;
-
-@TestConfiguration(proxyBeanMethods = false)
-@Profile("test")
 @Slf4j
-public class DbConfig {
-
-    @Autowired
-    LocalStackContainer localStack;
-
-    @Bean("DynamoDbClientLocal")
-    public DynamoDbClient dynamoDbClientLocal(AwsCredentialsProvider credentialsProvider) {
+@Configuration
+public class DynamoDbConfig {
+    @Bean
+    public DynamoDbClient dynamoDbClient() {
         return DynamoDbClient.builder()
-                .credentialsProvider(credentialsProvider)
-                .endpointOverride(localStack.getEndpointOverride(DYNAMODB))
+                .region(Region.EU_WEST_2)
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
     }
-    @Bean("ScoreTableTest")
-    public DynamoDbTable<Score> scoreTableLocal(@Qualifier("DynamoDbClientLocal") DynamoDbClient dynamoDbClient, @Value("${score.table}") String scoreTableName) {
+
+    @Primary
+    @Bean
+    public DynamoDbTable<Score> scoreTable(DynamoDbClient dynamoDbClient, @Value("${cloud.aws.dynamo.score.table}") String scoreTableName) {
         DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
         TableSchema<Score> scoreDocumentSchema = TableSchema.fromBean(Score.class);
 
-        if (!doesTableExist(dynamoDbClient, scoreTableName)) {
+        if (!tableExists(dynamoDbClient, scoreTableName)) {
             DynamoDbTable<Score> scoreTable = dynamoDbEnhancedClient.table(scoreTableName, scoreDocumentSchema);
 
             scoreTable.createTable();
@@ -53,14 +46,15 @@ public class DbConfig {
         return dynamoDbEnhancedClient.table(scoreTableName, scoreDocumentSchema);
     }
 
-    @Bean("PlayerTableTest")
-    public DynamoDbTable<Player> playerTableTest(@Qualifier("DynamoDbClientLocal") DynamoDbClient dynamoDbClient, @Value("${player.table}") String playerTableName) {
+    @Primary
+    @Bean
+    public DynamoDbTable<Player> playerTable(DynamoDbClient dynamoDbClient, @Value("${cloud.aws.dynamo.player.table}") String playerTableName) {
         DynamoDbEnhancedClient dynamoDbEnhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
         TableSchema<Player> playerDocumentSchema = TableSchema.fromBean(Player.class);
 
-        if (!doesTableExist(dynamoDbClient, playerTableName)) {
+        if (!tableExists(dynamoDbClient, playerTableName)) {
             DynamoDbTable<Player> playerTable = dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
 
             playerTable.createTable();
@@ -69,8 +63,7 @@ public class DbConfig {
         return dynamoDbEnhancedClient.table(playerTableName, playerDocumentSchema);
     }
 
-
-    private boolean doesTableExist(DynamoDbClient dynamoDbClient, String tableName) {
+    private boolean tableExists(DynamoDbClient dynamoDbClient, String tableName) {
         try {
             DescribeTableResponse response = dynamoDbClient.describeTable(DescribeTableRequest.builder()
                     .tableName(tableName)

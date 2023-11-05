@@ -1,12 +1,12 @@
 package com.guerrilla.scorecontroller.service;
 
-import com.guerrilla.scorecontroller.exception.PlayerHasNoScoresException;
 import com.guerrilla.scorecontroller.exception.ScoreNotFoundException;
 import com.guerrilla.scorecontroller.model.Score;
 import com.guerrilla.scorecontroller.repository.ScoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,13 +38,13 @@ public class ScoreService {
         return scoreRepository.getScoresByPlayer(playerId);
     }
 
-    public Score getHighestScore(UUID playerId) {
-        Optional<Score> score = scoreRepository.getHighestScore(playerId);
+    public Score getHighestScoreByPlayer(UUID playerId) {
+        Optional<Score> highestScore = getScoresByPlayer(playerId).stream().max(Comparator.comparing(Score::getValue));
 
-        if (score.isPresent()) {
-            return score.get();
+        if (highestScore.isPresent()) {
+            return highestScore.get();
         } else {
-            throw new PlayerHasNoScoresException(playerId.toString());
+            throw new ScoreNotFoundException(highestScore.toString());
         }
     }
 

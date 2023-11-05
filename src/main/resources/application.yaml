@@ -1,0 +1,23 @@
+cloud:
+  aws:
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
+    # Required to avoid getting metadata from EC2 instance
+    # turn off if we are running inside a EC2 instance on
+    # same region
+    # Reference : https://stackoverflow.com/a/54436955
+    stack:
+      auto: false
+    region:
+      auto: false
+      static: eu-west-2
+      use-default-aws-region-chain: true
+    dynamo:
+      score:
+        table: "ScoreTable"
+      player:
+        table: "PlayerTable"
+spring:
+  main:
+    allow-bean-definition-overriding: true

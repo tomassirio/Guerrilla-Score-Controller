@@ -20,6 +20,15 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      - name: Start LocalStack
+        run: docker run -d --name localstack -e SERVICES=dynamodb -p 4566:4566 localstack/localstack:latest
+
+      - name: Wait for LocalStack to be ready
+        run: |
+          until curl -sS http://localhost:4566; do
+            sleep 2
+          done
+
       - name: Configure AWS credentials
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
