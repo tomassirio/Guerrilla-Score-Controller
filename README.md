@@ -70,7 +70,7 @@ Install Docker: If you don't have Docker installed, you can download and install
 Build a Docker image for your Score Controller application using the provided Dockerfile. Make sure you are in the project directory:
 
 ```shell
-docker build -t score-controller .
+docker build -t score-controller-image:latest .  
 ```
 
 This command creates a Docker image named "score-controller."
@@ -80,10 +80,18 @@ This command creates a Docker image named "score-controller."
 After building the Docker image, you can run it as a container. Be sure to configure your AWS credentials as environment variables to enable communication with AWS services. Replace [YOUR_ACCESS_KEY] and [YOUR_SECRET_KEY] with your AWS credentials:
 
 ```shell
-docker run -e AWS_ACCESS_KEY_ID=[YOUR_ACCESS_KEY] -e AWS_SECRET_ACCESS_KEY=[YOUR_SECRET_KEY] -p 8080:8080 score-controller
+docker run -e AWS_ACCESS_KEY_ID=[YOUR_ACCESS_KEY] -e AWS_SECRET_ACCESS_KEY=[YOUR_SECRET_KEY] -p 8080:8080 score-controller-image:latest
 ```
 
 This command starts a Docker container from the "score-controller" image, maps port 8080 from the container to your host machine, and provides AWS credentials as environment variables.
+
+#### Docker-compose (Optional)
+
+You can also modify the .env file with your AWS credentials and run 
+
+```shell
+docker-compose up
+```
 
 #### Access the Application:
 
