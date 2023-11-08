@@ -18,6 +18,7 @@ Score Controller is a Java application that manages and tracks scores for player
       - [Player API](#player-api)
       - [Open API](#openapi)
     - [AWS Configuration](#aws-configuration)
+    - [To be Implemented](#to-be-implemented)
     - [Contributing](#contributing)
 
 --- 
