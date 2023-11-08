@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: score-controller-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: score-controller
+  template:
+    metadata:
+      labels:
+        app: score-controller
+    spec:
+      containers:
+        - name: score-controller
+          image: score-controller:latest
+          ports:
+            - containerPort: 8080
